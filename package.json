@@ -2,8 +2,12 @@
   "name": "atlas-dashboard",
   "displayName": "ATLAS Dashboard",
   "description": "Your personal AI-style startup dashboard for VSCode",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "paphangkorn",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oksoimcodingnow/atlas-dashboard.git"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -15,6 +19,10 @@
       {
         "command": "atlas.openDashboard",
         "title": "ATLAS: Open Dashboard"
+      },
+      {
+        "command": "atlas.reload",
+        "title": "ATLAS: Reload Dashboard"
       }
     ],
     "configuration": {
@@ -29,6 +37,52 @@
           "type": "string",
           "default": "Protocol",
           "description": "Name shown in the greeting"
+        },
+        "atlas.sprintStartDate": {
+          "type": "string",
+          "default": "",
+          "description": "ISO date (YYYY-MM-DD) when this sprint began. Empty hides the counter."
+        },
+        "atlas.sprintLength": {
+          "type": "number",
+          "default": 3,
+          "description": "Sprint length in days"
+        },
+        "atlas.location": {
+          "type": "string",
+          "default": "URBAN",
+          "description": "Location label shown in the status panel"
+        },
+        "atlas.journalPath": {
+          "type": "string",
+          "default": "JOURNAL.md",
+          "description": "Relative path to the markdown file used for the Todos widget"
+        },
+        "atlas.projects": {
+          "type": "array",
+          "default": [],
+          "description": "Quick-open project list. Each entry: {\"name\": \"...\", \"path\": \"absolute-path\"}",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "path": { "type": "string" }
+            },
+            "required": ["name", "path"]
+          }
+        },
+        "atlas.links": {
+          "type": "array",
+          "default": [],
+          "description": "External links. Each entry: {\"name\": \"...\", \"url\": \"https://...\"}",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string" }
+            },
+            "required": ["name", "url"]
+          }
         }
       }
     }

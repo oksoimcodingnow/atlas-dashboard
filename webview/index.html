@@ -11,6 +11,7 @@
     --bg-2: #0a1320;
     --text: #d6f6ff;
     --warn: #ff9d3d;
+    --ok: #6cffb1;
   }
 
   * { box-sizing: border-box; }
@@ -20,11 +21,9 @@
     background: radial-gradient(ellipse at center, var(--bg-2) 0%, var(--bg) 70%);
     color: var(--text);
     font-family: "Segoe UI", "Consolas", monospace;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
     user-select: none;
   }
-
   body::before {
     content: "";
     position: fixed; inset: 0;
@@ -39,10 +38,10 @@
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-rows: auto 1fr auto;
-    height: 100vh;
-    padding: 24px 36px;
-    gap: 16px;
+    grid-template-rows: auto auto auto auto;
+    min-height: 100vh;
+    padding: 20px 28px;
+    gap: 14px;
   }
 
   /* Header */
@@ -59,8 +58,9 @@
     color: var(--cyan);
     text-shadow: 0 0 12px rgba(0,229,255,0.6);
   }
+  .header-right { display: flex; align-items: center; gap: 14px; }
   .status {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     letter-spacing: 0.2em;
     color: var(--cyan-dim);
   }
@@ -75,21 +75,28 @@
     0%,100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.3; transform: scale(0.7); }
   }
-
-  /* Center */
-  .center {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr 1fr;
-    gap: 18px;
-    align-items: stretch;
+  .gear {
+    cursor: pointer;
+    color: var(--cyan-dim);
+    font-size: 0.85rem;
+    border: 1px solid rgba(0,229,255,0.3);
+    padding: 4px 10px;
+    transition: 0.18s;
   }
+  .gear:hover { color: var(--cyan); border-color: var(--cyan); }
+
+  /* Rows */
+  .row { display: grid; gap: 14px; }
+  .row-top { grid-template-columns: 1fr 1.4fr 1fr; align-items: stretch; }
+  .row-bottom { grid-template-columns: 1fr 1.2fr 1fr; align-items: stretch; }
 
   .panel {
     border: 1px solid rgba(0,229,255,0.25);
     background: rgba(0, 30, 50, 0.18);
-    padding: 18px;
+    padding: 16px;
     position: relative;
     backdrop-filter: blur(4px);
+    min-height: 180px;
   }
   .panel::before, .panel::after {
     content: "";
@@ -101,29 +108,31 @@
   .panel::after  { bottom: -1px; right: -1px; border-left: none; border-top: none; }
 
   .panel h3 {
-    margin: 0 0 12px;
-    font-size: 0.7rem;
+    margin: 0 0 10px;
+    font-size: 0.68rem;
     letter-spacing: 0.3em;
     color: var(--cyan);
     border-bottom: 1px dashed rgba(0,229,255,0.3);
     padding-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel h3 .meta {
+    color: var(--cyan-dim);
+    letter-spacing: 0.15em;
+    font-size: 0.6rem;
   }
 
-  /* Core (the big greeting circle) */
-  .core {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
+  /* Core */
+  .core { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
   .ring {
-    width: 230px; height: 230px;
+    width: 200px; height: 200px;
     border-radius: 50%;
     border: 2px solid rgba(0,229,255,0.4);
     display: flex; align-items: center; justify-content: center;
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     box-shadow: 0 0 30px rgba(0,229,255,0.15), inset 0 0 30px rgba(0,229,255,0.15);
   }
   .ring::before {
@@ -143,47 +152,33 @@
     border-left: 2px solid transparent;
     animation: spin 3s linear infinite reverse;
   }
-  @keyframes spin {
-    from { transform: rotate(0); }
-    to   { transform: rotate(360deg); }
-  }
-  .greet {
-    font-size: 1.6rem;
-    color: var(--cyan);
-    text-shadow: 0 0 10px rgba(0,229,255,0.6);
-  }
-  .sub {
-    font-size: 0.85rem;
-    color: var(--text);
-    opacity: 0.7;
-    margin-top: 6px;
-  }
-  .prompt {
-    margin-top: 10px;
-    font-size: 1rem;
-    color: var(--text);
-  }
+  @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  .greet { font-size: 1.4rem; color: var(--cyan); text-shadow: 0 0 10px rgba(0,229,255,0.6); }
+  .sub   { font-size: 0.85rem; color: var(--text); opacity: 0.8; margin-top: 4px; }
+  .prompt { margin-top: 8px; font-size: 0.95rem; color: var(--text); }
   .prompt span { color: var(--cyan); }
 
-  /* Quick actions */
-  .actions {
-    display: grid;
-    gap: 10px;
-  }
-  button.action {
+  /* Stats */
+  .stats { display: grid; gap: 9px; font-size: 0.82rem; }
+  .stats .srow { display: flex; justify-content: space-between; }
+  .stats .srow span:last-child { color: var(--cyan); }
+
+  /* Action button */
+  .actions { display: grid; gap: 9px; }
+  button.action, .listbtn {
     background: transparent;
     border: 1px solid rgba(0,229,255,0.4);
     color: var(--text);
-    padding: 12px 14px;
+    padding: 10px 12px;
     text-align: left;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.85rem;
-    letter-spacing: 0.05em;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
     transition: 0.18s ease;
-    position: relative;
+    width: 100%;
   }
-  button.action:hover {
+  button.action:hover, .listbtn:hover {
     background: rgba(0,229,255,0.1);
     border-color: var(--cyan);
     box-shadow: 0 0 14px rgba(0,229,255,0.25);
@@ -195,16 +190,53 @@
     float: right;
   }
 
-  /* Status panel */
-  .stats { display: grid; gap: 10px; font-size: 0.85rem; }
-  .stats .row { display: flex; justify-content: space-between; }
-  .stats .row span:last-child { color: var(--cyan); }
+  /* Lists (projects/links) */
+  .list { display: grid; gap: 8px; max-height: 220px; overflow-y: auto; padding-right: 4px; }
+  .list::-webkit-scrollbar { width: 6px; }
+  .list::-webkit-scrollbar-thumb { background: var(--cyan-dim); }
+  .listbtn .sub-line {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--cyan-dim);
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+    word-break: break-all;
+  }
+  .empty {
+    color: var(--cyan-dim);
+    font-size: 0.78rem;
+    font-style: italic;
+    padding: 12px 4px;
+    line-height: 1.5;
+  }
+
+  /* Journal todos */
+  .todo {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(0,229,255,0.1);
+    font-size: 0.82rem;
+  }
+  .todo:last-child { border-bottom: none; }
+  .todo .box {
+    width: 14px; height: 14px;
+    border: 1px solid var(--cyan);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    color: var(--ok);
+  }
+  .todo.done .text { text-decoration: line-through; opacity: 0.4; }
+  .todo.done .box { background: rgba(108,255,177,0.15); border-color: var(--ok); }
 
   /* Footer */
   .footer {
     display: flex;
     justify-content: space-between;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--cyan-dim);
     letter-spacing: 0.2em;
     border-top: 1px solid rgba(0,229,255,0.2);
@@ -219,64 +251,84 @@
   <div class="stage">
     <div class="header">
       <div class="brand">A · T · L · A · S</div>
-      <div class="status"><span class="dot"></span>SYSTEM ONLINE</div>
+      <div class="header-right">
+        <div class="status"><span class="dot"></span>SYSTEM ONLINE</div>
+        <div class="gear" id="gear">⚙ SETTINGS</div>
+      </div>
     </div>
 
-    <div class="center">
-      <!-- LEFT: Status -->
+    <!-- ROW 1: Status / Core / Quick Actions -->
+    <div class="row row-top">
       <div class="panel">
         <h3>STATUS</h3>
         <div class="stats">
-          <div class="row"><span>SESSION</span><span id="session">--</span></div>
-          <div class="row"><span>DATE</span><span id="date">--</span></div>
-          <div class="row"><span>TIME</span><span id="time">--:--:--</span></div>
-          <div class="row"><span>SPRINT</span><span>DAY 1 / 3</span></div>
-          <div class="row"><span>LOCATION</span><span>URBAN</span></div>
-          <div class="row"><span>MODE</span><span>FOCUS</span></div>
+          <div class="srow"><span>SESSION</span><span id="session">--</span></div>
+          <div class="srow"><span>DATE</span><span id="date">--</span></div>
+          <div class="srow"><span>TIME</span><span id="time">--:--:--</span></div>
+          <div class="srow" id="sprintRow"><span>SPRINT</span><span id="sprint">--</span></div>
+          <div class="srow"><span>LOCATION</span><span id="location">--</span></div>
+          <div class="srow"><span>WORKSPACE</span><span id="workspace">--</span></div>
         </div>
       </div>
 
-      <!-- CENTER: Core -->
       <div class="panel core">
         <div class="ring">
           <div>
             <div class="greet" id="greet">Good morning</div>
-            <div class="sub">{{userName}}</div>
+            <div class="sub" id="userName">User</div>
           </div>
         </div>
         <div class="prompt">What are we building today<span class="blink">_</span></div>
       </div>
 
-      <!-- RIGHT: Actions -->
       <div class="panel">
         <h3>QUICK ACTIONS</h3>
         <div class="actions">
           <button class="action" data-cmd="openClaude">▶ Start Claude<span class="k">[1]</span></button>
-          <button class="action" data-cmd="openTerminal">▶ Open Terminal<span class="k">[2]</span></button>
-          <button class="action" data-vscode="workbench.action.files.newUntitledFile">▶ New File<span class="k">[3]</span></button>
-          <button class="action" data-vscode="workbench.action.files.openFolder">▶ Open Folder<span class="k">[4]</span></button>
-          <button class="action" data-vscode="workbench.action.quickOpen">▶ Quick Open<span class="k">[5]</span></button>
-          <button class="action" data-vscode="workbench.action.gotoSymbol">▶ Go to Symbol<span class="k">[6]</span></button>
+          <button class="action" data-cmd="runLiveServer">▶ Go Live (Live Server)<span class="k">[2]</span></button>
+          <button class="action" data-cmd="openTerminal">▶ Open Terminal<span class="k">[3]</span></button>
+          <button class="action" data-vscode="workbench.action.quickOpen">▶ Quick Open<span class="k">[4]</span></button>
+          <button class="action" data-vscode="workbench.action.files.newUntitledFile">▶ New File<span class="k">[5]</span></button>
+          <button class="action" data-vscode="workbench.scm.focus">▶ Source Control<span class="k">[6]</span></button>
         </div>
       </div>
     </div>
 
+    <!-- ROW 2: Projects / Journal / Links -->
+    <div class="row row-bottom">
+      <div class="panel">
+        <h3>PROJECTS <span class="meta" id="projCount"></span></h3>
+        <div class="list" id="projectsList"></div>
+      </div>
+
+      <div class="panel">
+        <h3>JOURNAL TODOS <span class="meta" id="journalMeta"></span></h3>
+        <div id="journalContent" class="list"></div>
+      </div>
+
+      <div class="panel">
+        <h3>LINKS <span class="meta" id="linkCount"></span></h3>
+        <div class="list" id="linksList"></div>
+      </div>
+    </div>
+
     <div class="footer">
-      <div>ATLAS v0.0.3 — initialized</div>
-      <div id="quote">"Sometimes you gotta run before you can walk."</div>
+      <div>ATLAS v0.0.4 — initialized</div>
+      <div id="quote">"Atlas online. Standing by."</div>
     </div>
   </div>
 
 <script>
   const vscode = acquireVsCodeApi();
+  const ATLAS_CONFIG = __ATLAS_CONFIG__;
 
+  // ===== Time / sprint / status =====
   function pad(n){ return String(n).padStart(2,"0"); }
   function tick() {
     const now = new Date();
     document.getElementById("time").textContent =
       pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
-    document.getElementById("date").textContent =
-      now.toISOString().slice(0,10);
+    document.getElementById("date").textContent = now.toISOString().slice(0,10);
     document.getElementById("session").textContent = "#" + (now.getTime() % 9999);
 
     const h = now.getHours();
@@ -289,37 +341,132 @@
   tick();
   setInterval(tick, 1000);
 
+  // Sprint counter
+  function calcSprint() {
+    const el = document.getElementById("sprint");
+    const row = document.getElementById("sprintRow");
+    if (!ATLAS_CONFIG.sprintStartDate) {
+      row.style.display = "none";
+      return;
+    }
+    const start = new Date(ATLAS_CONFIG.sprintStartDate + "T00:00:00");
+    if (isNaN(start.getTime())) { el.textContent = "INVALID DATE"; return; }
+    const now = new Date();
+    const days = Math.floor((now - start) / 86400000) + 1;
+    const total = ATLAS_CONFIG.sprintLength || 0;
+    el.textContent = total > 0 ? `DAY ${days} / ${total}` : `DAY ${days}`;
+  }
+  calcSprint();
+
+  document.getElementById("userName").textContent = ATLAS_CONFIG.userName;
+  document.getElementById("location").textContent = ATLAS_CONFIG.location || "—";
+  document.getElementById("workspace").textContent = ATLAS_CONFIG.workspaceName || "—";
+
+  // ===== Quotes =====
   const quotes = [
     '"He who holds the world, builds it."',
     '"Ship it, then perfect it."',
-    '"The map is not the territory — write code, not docs."',
     '"Done is better than perfect."',
     '"Move fast. Break nothing important."',
-    '"Atlas online. Standing by."'
+    '"Atlas online. Standing by."',
+    '"The map is not the territory — write code, not docs."'
   ];
-  document.getElementById("quote").textContent =
-    quotes[Math.floor(Math.random() * quotes.length)];
+  document.getElementById("quote").textContent = quotes[Math.floor(Math.random() * quotes.length)];
 
+  // ===== Projects =====
+  const projWrap = document.getElementById("projectsList");
+  const projects = ATLAS_CONFIG.projects || [];
+  document.getElementById("projCount").textContent = projects.length ? `${projects.length} configured` : "";
+  if (projects.length === 0) {
+    projWrap.innerHTML = '<div class="empty">No projects configured yet.<br/>Open settings (⚙) and add some to <code>atlas.projects</code>.</div>';
+  } else {
+    projects.forEach((p) => {
+      const btn = document.createElement("button");
+      btn.className = "listbtn";
+      btn.innerHTML = `▶ ${escapeHtml(p.name)}<span class="sub-line">${escapeHtml(p.path)}</span>`;
+      btn.onclick = () => vscode.postMessage({ command: "openProject", targetPath: p.path });
+      projWrap.appendChild(btn);
+    });
+  }
+
+  // ===== Links =====
+  const linkWrap = document.getElementById("linksList");
+  const links = ATLAS_CONFIG.links || [];
+  document.getElementById("linkCount").textContent = links.length ? `${links.length} configured` : "";
+  if (links.length === 0) {
+    linkWrap.innerHTML = '<div class="empty">No links configured yet.<br/>Add some to <code>atlas.links</code> in settings.</div>';
+  } else {
+    links.forEach((l) => {
+      const btn = document.createElement("button");
+      btn.className = "listbtn";
+      btn.innerHTML = `↗ ${escapeHtml(l.name)}<span class="sub-line">${escapeHtml(l.url)}</span>`;
+      btn.onclick = () => vscode.postMessage({ command: "openExternal", url: l.url });
+      linkWrap.appendChild(btn);
+    });
+  }
+
+  // ===== Journal todos =====
+  vscode.postMessage({ command: "readJournal" });
+
+  window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (msg.command === "journalResult") {
+      renderJournal(msg.data);
+    }
+  });
+
+  function renderJournal(data) {
+    const wrap = document.getElementById("journalContent");
+    const meta = document.getElementById("journalMeta");
+    wrap.innerHTML = "";
+    if (data.error) {
+      meta.textContent = "";
+      wrap.innerHTML = `<div class="empty">${escapeHtml(data.error)}<br/>Set <code>atlas.journalPath</code> if it lives elsewhere.</div>`;
+      return;
+    }
+    const todos = data.todos || [];
+    if (todos.length === 0) {
+      meta.textContent = "";
+      wrap.innerHTML = '<div class="empty">No <code>- [ ]</code> checkboxes found in journal.</div>';
+      return;
+    }
+    const open = todos.filter(t => !t.done).length;
+    meta.textContent = `${open} open / ${todos.length} total`;
+    todos.forEach(t => {
+      const el = document.createElement("div");
+      el.className = "todo" + (t.done ? " done" : "");
+      el.innerHTML = `<div class="box">${t.done ? "✓" : ""}</div><div class="text">${escapeHtml(t.text)}</div>`;
+      wrap.appendChild(el);
+    });
+  }
+
+  // ===== Actions wiring =====
   document.querySelectorAll("button.action").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (btn.dataset.file) {
-        vscode.postMessage({ command: "openFile", file: btn.dataset.file });
-      } else if (btn.dataset.cmd === "openTerminal") {
-        vscode.postMessage({ command: "openTerminal" });
-      } else if (btn.dataset.cmd === "openClaude") {
-        vscode.postMessage({ command: "openClaude" });
-      } else if (btn.dataset.vscode) {
-        vscode.postMessage({ command: "runCommand", id: btn.dataset.vscode });
-      }
+      if (btn.dataset.cmd === "openTerminal")     vscode.postMessage({ command: "openTerminal" });
+      else if (btn.dataset.cmd === "openClaude")  vscode.postMessage({ command: "openClaude" });
+      else if (btn.dataset.cmd === "runLiveServer") vscode.postMessage({ command: "runLiveServer" });
+      else if (btn.dataset.vscode)                vscode.postMessage({ command: "runCommand", id: btn.dataset.vscode });
     });
   });
 
+  document.getElementById("gear").onclick = () => vscode.postMessage({ command: "openSettings" });
+
+  // Keyboard shortcuts 1-6
   document.addEventListener("keydown", (e) => {
     const map = { "1":0, "2":1, "3":2, "4":3, "5":4, "6":5 };
     if (map[e.key] !== undefined) {
-      document.querySelectorAll("button.action")[map[e.key]].click();
+      const btns = document.querySelectorAll("#row-top button.action, .row-top button.action");
+      const actionBtns = document.querySelectorAll("button.action");
+      if (actionBtns[map[e.key]]) actionBtns[map[e.key]].click();
     }
   });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    })[c]);
+  }
 </script>
 </body>
 </html>
