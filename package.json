@@ -2,7 +2,7 @@
   "name": "atlas-dashboard",
   "displayName": "ATLAS Dashboard",
   "description": "Your personal AI-style startup dashboard for VSCode",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "paphangkorn",
   "engines": {
     "vscode": "^1.80.0"
@@ -27,7 +27,7 @@
         },
         "atlas.userName": {
           "type": "string",
-          "default": "Paphangkorn",
+          "default": "Protocol",
           "description": "Name shown in the greeting"
         }
       }

@@ -45,7 +45,7 @@ In VSCode settings:
 | Setting | Default | Description |
 |---|---|---|
 | `atlas.openOnStartup` | `true` | Auto-open dashboard when VSCode starts |
-| `atlas.userName` | `Paphangkorn` | Name shown in the greeting |
+| `atlas.userName` | `Protocol` | Name shown in the greeting |
 
 ## Why I built this
 
