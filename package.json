@@ -1,0 +1,39 @@
+{
+  "name": "atlas-dashboard",
+  "displayName": "ATLAS Dashboard",
+  "description": "Your personal AI-style startup dashboard for VSCode",
+  "version": "0.0.2",
+  "publisher": "paphangkorn",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "atlas.openDashboard",
+        "title": "ATLAS: Open Dashboard"
+      }
+    ],
+    "configuration": {
+      "title": "ATLAS Dashboard",
+      "properties": {
+        "atlas.openOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open ATLAS Dashboard automatically when VSCode starts"
+        },
+        "atlas.userName": {
+          "type": "string",
+          "default": "Paphangkorn",
+          "description": "Name shown in the greeting"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "echo no-build"
+  }
+}
