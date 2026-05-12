@@ -1,8 +1,8 @@
 {
   "name": "atlas-dashboard",
   "displayName": "ATLAS Dashboard",
-  "description": "Your personal AI-style startup dashboard for VSCode",
-  "version": "0.0.4",
+  "description": "Your personal AI-style startup dashboard for VSCode with built-in Claude AI chat",
+  "version": "0.0.5",
   "publisher": "paphangkorn",
   "repository": {
     "type": "git",
@@ -11,7 +11,7 @@
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": ["Other"],
+  "categories": ["Other", "AI"],
   "activationEvents": ["onStartupFinished"],
   "main": "./extension.js",
   "contributes": {
@@ -23,6 +23,14 @@
       {
         "command": "atlas.reload",
         "title": "ATLAS: Reload Dashboard"
+      },
+      {
+        "command": "atlas.setApiKey",
+        "title": "ATLAS: Set Anthropic API Key"
+      },
+      {
+        "command": "atlas.clearApiKey",
+        "title": "ATLAS: Clear Anthropic API Key"
       }
     ],
     "configuration": {
@@ -83,11 +91,42 @@
             },
             "required": ["name", "url"]
           }
+        },
+        "atlas.model": {
+          "type": "string",
+          "default": "claude-opus-4-7",
+          "enum": [
+            "claude-opus-4-7",
+            "claude-opus-4-6",
+            "claude-sonnet-4-6",
+            "claude-haiku-4-5"
+          ],
+          "enumDescriptions": [
+            "Most capable (slowest, $5/$25 per 1M tokens)",
+            "Previous-generation Opus ($5/$25 per 1M tokens)",
+            "Balanced speed and intelligence ($3/$15 per 1M tokens)",
+            "Fastest and cheapest ($1/$5 per 1M tokens)"
+          ],
+          "description": "Claude model used by ATLAS chat"
+        },
+        "atlas.systemPrompt": {
+          "type": "string",
+          "default": "You are ATLAS — a personal AI assistant inspired by Jarvis from Iron Man. You're integrated into the user's VSCode dashboard. Be helpful, witty, and slightly formal. Keep replies concise unless asked for depth. Address the user by their preferred name when natural. You can help with code, debugging, project planning, and general dev questions.",
+          "description": "System prompt that defines ATLAS's personality",
+          "editPresentation": "multilineText"
+        },
+        "atlas.maxTokens": {
+          "type": "number",
+          "default": 2048,
+          "description": "Max output tokens per chat response"
         }
       }
     }
   },
   "scripts": {
     "vscode:prepublish": "echo no-build"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.74.0"
   }
 }

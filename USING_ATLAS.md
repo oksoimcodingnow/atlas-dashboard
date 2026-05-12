@@ -150,11 +150,62 @@ These override your user settings when this workspace is open.
 
 ---
 
+## Talk to ATLAS (Built-in AI Chat)
+
+ATLAS has a built-in chat powered by the Anthropic Claude API. The chat panel sits below the other panels and supports real-time streaming responses.
+
+### One-time setup
+
+| Step | What to do |
+|------|-----------|
+| 1 | Get an API key at https://console.anthropic.com/settings/keys |
+| 2 | `Ctrl+Shift+P` → **ATLAS: Set Anthropic API Key** |
+| 3 | Paste the key (starts with `sk-ant-`) — stored securely in VSCode's SecretStorage |
+| 4 | Type a message in the chat panel and press **Enter** |
+
+### Usage
+
+- **Enter** to send · **Shift+Enter** for a new line
+- **CLEAR** button wipes the conversation history (saves tokens on long chats)
+- The conversation history is kept in the dashboard only — not saved between sessions
+- The current model is shown in the panel header
+
+### Model selection
+
+The model is set via `atlas.model`. Trade-offs:
+
+| Model | Cost (input / output per 1M tokens) | Speed | Best for |
+|-------|-------------------------------------|-------|----------|
+| `claude-opus-4-7` (default) | $5 / $25 | Slow | Hardest problems, deep reasoning |
+| `claude-opus-4-6` | $5 / $25 | Slow | Previous-gen Opus |
+| `claude-sonnet-4-6` | $3 / $15 | Fast | Most chats — best balance |
+| `claude-haiku-4-5` | $1 / $5 | Fastest | Quick lookups, classification |
+
+For everyday chats, **Sonnet 4.6 is usually the smart pick** — it's plenty smart and ~3× cheaper.
+
+### Customizing ATLAS's personality
+
+Edit `atlas.systemPrompt` in settings. The default makes ATLAS feel like Jarvis (helpful, witty, slightly formal). Examples:
+
+- *Strict coding partner*: "You are a senior engineer. Give direct, code-first answers. No fluff."
+- *Roshop project assistant*: "You are ATLAS. You help with the user's roshop project — a Firebase-based Roblox item shop. Always check JOURNAL.md context when relevant."
+
+### Costs
+
+The Anthropic API bills per token. ATLAS chat is **separate** from any Claude Code or Claude.ai subscription you might have — it uses your raw API key and bills your Anthropic account directly. Watch your usage at https://console.anthropic.com/usage
+
+### Clearing the API key
+
+`Ctrl+Shift+P` → **ATLAS: Clear Anthropic API Key**
+
+---
+
 ## What's Next (Ideas)
 
+- [ ] Persist chat history across sessions
+- [ ] Markdown rendering in chat responses (code blocks, lists)
 - [ ] Save the last project you opened from ATLAS
 - [ ] Show git branch + uncommitted changes count in Status
-- [ ] Pull the current weather into the HUD
 - [ ] Voice greeting on startup (because Jarvis)
 - [ ] Theme picker — red/gold (Iron Man), green (Hulk), etc.
 

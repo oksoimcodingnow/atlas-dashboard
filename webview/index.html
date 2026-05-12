@@ -245,6 +245,128 @@
 
   .blink { animation: blink 1.2s steps(2) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
+
+  /* ===== Chat panel ===== */
+  .chat-panel { min-height: 320px; display: flex; flex-direction: column; }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 4px;
+    margin-bottom: 10px;
+    max-height: 320px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .chat-messages::-webkit-scrollbar { width: 6px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--cyan-dim); }
+  .chat-empty {
+    text-align: center;
+    color: var(--cyan-dim);
+    font-size: 0.78rem;
+    font-style: italic;
+    padding: 30px 12px;
+    line-height: 1.6;
+  }
+  .chat-empty .hint { font-size: 0.7rem; opacity: 0.7; margin-top: 6px; }
+  .bubble {
+    padding: 10px 14px;
+    max-width: 80%;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    border: 1px solid rgba(0,229,255,0.25);
+    position: relative;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .bubble.user {
+    align-self: flex-end;
+    background: rgba(0,229,255,0.08);
+    border-color: rgba(0,229,255,0.4);
+    color: var(--text);
+  }
+  .bubble.atlas {
+    align-self: flex-start;
+    background: rgba(0, 30, 50, 0.4);
+    color: var(--text);
+  }
+  .bubble.atlas::before {
+    content: "ATLAS";
+    position: absolute;
+    top: -8px; left: 8px;
+    background: var(--bg-2);
+    color: var(--cyan);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    padding: 0 6px;
+  }
+  .bubble.error {
+    align-self: flex-start;
+    background: rgba(255,80,80,0.1);
+    border-color: rgba(255,80,80,0.5);
+    color: #ffaaaa;
+    font-size: 0.82rem;
+  }
+  .bubble.thinking { opacity: 0.6; font-style: italic; }
+  .bubble .cursor {
+    display: inline-block;
+    width: 7px; height: 14px;
+    background: var(--cyan);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 1s steps(2) infinite;
+  }
+
+  .chat-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    border-top: 1px solid rgba(0,229,255,0.2);
+    padding-top: 10px;
+  }
+  .chat-input {
+    flex: 1;
+    background: rgba(0, 30, 50, 0.3);
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--text);
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    resize: none;
+    min-height: 38px;
+    max-height: 120px;
+  }
+  .chat-input:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 12px rgba(0,229,255,0.2);
+  }
+  .chat-input::placeholder { color: var(--cyan-dim); }
+  .chat-send {
+    background: rgba(0,229,255,0.15);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    padding: 0 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .chat-send:hover { background: rgba(0,229,255,0.3); box-shadow: 0 0 16px rgba(0,229,255,0.4); }
+  .chat-send:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+  .chat-clear {
+    background: transparent;
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--cyan-dim);
+    padding: 0 12px;
+    font-family: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .chat-clear:hover { color: var(--cyan); border-color: var(--cyan); }
 </style>
 </head>
 <body>
@@ -312,8 +434,24 @@
       </div>
     </div>
 
+    <!-- ROW 3: Chat -->
+    <div class="panel chat-panel">
+      <h3>TALK TO ATLAS <span class="meta" id="modelMeta"></span></h3>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-empty">
+          Standing by. What can I help you with<span class="blink">_</span>
+          <div class="hint">Built-in Claude AI · Press Enter to send · Shift+Enter for new line</div>
+        </div>
+      </div>
+      <div class="chat-input-wrap">
+        <textarea class="chat-input" id="chatInput" rows="1" placeholder="Talk to ATLAS..."></textarea>
+        <button class="chat-send" id="chatSend">SEND</button>
+        <button class="chat-clear" id="chatClear" title="Clear conversation">CLEAR</button>
+      </div>
+    </div>
+
     <div class="footer">
-      <div>ATLAS v0.0.4 — initialized</div>
+      <div>ATLAS v0.0.5 — initialized</div>
       <div id="quote">"Atlas online. Standing by."</div>
     </div>
   </div>
@@ -452,13 +590,113 @@
 
   document.getElementById("gear").onclick = () => vscode.postMessage({ command: "openSettings" });
 
-  // Keyboard shortcuts 1-6
+  // Keyboard shortcuts 1-6 — only when chat input not focused
   document.addEventListener("keydown", (e) => {
+    if (document.activeElement && document.activeElement.id === "chatInput") return;
     const map = { "1":0, "2":1, "3":2, "4":3, "5":4, "6":5 };
     if (map[e.key] !== undefined) {
-      const btns = document.querySelectorAll("#row-top button.action, .row-top button.action");
       const actionBtns = document.querySelectorAll("button.action");
       if (actionBtns[map[e.key]]) actionBtns[map[e.key]].click();
+    }
+  });
+
+  // ===== Chat =====
+  const chatHistory = [];
+  const chatMessages = document.getElementById("chatMessages");
+  const chatInput = document.getElementById("chatInput");
+  const chatSend = document.getElementById("chatSend");
+  const chatClear = document.getElementById("chatClear");
+  const modelMeta = document.getElementById("modelMeta");
+  modelMeta.textContent = ATLAS_CONFIG.model || "";
+
+  let activeTurnId = null;
+  let activeBubble = null;
+  let activeBubbleText = "";
+
+  function clearEmptyState() {
+    const empty = chatMessages.querySelector(".chat-empty");
+    if (empty) empty.remove();
+  }
+
+  function addBubble(role, text) {
+    clearEmptyState();
+    const el = document.createElement("div");
+    el.className = "bubble " + role;
+    el.textContent = text;
+    chatMessages.appendChild(el);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return el;
+  }
+
+  function autoresize() {
+    chatInput.style.height = "auto";
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+  }
+  chatInput.addEventListener("input", autoresize);
+
+  function sendChat() {
+    const text = chatInput.value.trim();
+    if (!text || activeTurnId) return;
+
+    addBubble("user", text);
+    chatHistory.push({ role: "user", content: text });
+
+    chatInput.value = "";
+    autoresize();
+
+    activeTurnId = "t" + Date.now();
+    activeBubble = addBubble("atlas thinking", "");
+    activeBubble.innerHTML = '<span class="cursor"></span>';
+    activeBubbleText = "";
+    chatSend.disabled = true;
+
+    vscode.postMessage({
+      command: "chat",
+      turnId: activeTurnId,
+      messages: chatHistory
+    });
+  }
+
+  chatSend.addEventListener("click", sendChat);
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendChat();
+    }
+  });
+
+  chatClear.addEventListener("click", () => {
+    chatHistory.length = 0;
+    chatMessages.innerHTML = '<div class="chat-empty">Standing by. What can I help you with<span class="blink">_</span><div class="hint">Conversation cleared.</div></div>';
+  });
+
+  // Listen for chat messages from extension
+  window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (msg.command === "chatDelta" && msg.turnId === activeTurnId) {
+      if (activeBubble.classList.contains("thinking")) {
+        activeBubble.classList.remove("thinking");
+      }
+      activeBubbleText += msg.text;
+      activeBubble.textContent = activeBubbleText;
+      // cursor inside
+      const cursor = document.createElement("span");
+      cursor.className = "cursor";
+      activeBubble.appendChild(cursor);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    } else if (msg.command === "chatDone" && msg.turnId === activeTurnId) {
+      activeBubble.textContent = activeBubbleText || "(empty response)";
+      chatHistory.push({ role: "assistant", content: activeBubbleText });
+      activeTurnId = null;
+      activeBubble = null;
+      chatSend.disabled = false;
+      chatInput.focus();
+    } else if (msg.command === "chatError") {
+      if (activeBubble) activeBubble.remove();
+      const err = addBubble("error", "⚠ " + msg.message);
+      activeTurnId = null;
+      activeBubble = null;
+      chatSend.disabled = false;
     }
   });
 

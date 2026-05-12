@@ -18,6 +18,7 @@ Built as a personal productivity tool to make my dev workflow feel a little more
 - 📁 **Projects panel** — one-click open any folder you configure
 - 📓 **Journal Todos** — reads `- [ ]` items from your `JOURNAL.md` and shows what's left
 - 🔗 **Links panel** — Firebase Console, live site URLs, GitHub repos
+- 🤖 **Built-in Claude AI chat** — talk to ATLAS, streaming responses, bring your own Anthropic API key
 - ⚙ **Per-workspace customization** via `.vscode/settings.json`
 
 ## Stack
