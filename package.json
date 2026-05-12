@@ -2,7 +2,7 @@
   "name": "atlas-dashboard",
   "displayName": "ATLAS Dashboard",
   "description": "Your personal AI-style startup dashboard for VSCode with built-in Claude AI chat",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "paphangkorn",
   "repository": {
     "type": "git",

@@ -367,6 +367,44 @@
     transition: 0.15s;
   }
   .chat-clear:hover { color: var(--cyan); border-color: var(--cyan); }
+
+  /* Model picker pills */
+  .chat-panel h3 { display: flex; align-items: center; gap: 10px; }
+  .model-picker {
+    display: flex;
+    gap: 0;
+    margin-left: auto;
+    border: 1px solid rgba(0,229,255,0.25);
+  }
+  .model-pill {
+    background: transparent;
+    border: none;
+    border-right: 1px solid rgba(0,229,255,0.2);
+    color: var(--cyan-dim);
+    padding: 3px 9px;
+    font-family: inherit;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    cursor: pointer;
+    transition: 0.15s;
+    line-height: 1.4;
+    text-align: center;
+  }
+  .model-pill:last-child { border-right: none; }
+  .model-pill:hover { background: rgba(0,229,255,0.08); color: var(--text); }
+  .model-pill.active {
+    background: rgba(0,229,255,0.18);
+    color: var(--cyan);
+    text-shadow: 0 0 6px rgba(0,229,255,0.5);
+  }
+  .model-pill .cost {
+    display: block;
+    font-size: 0.5rem;
+    color: inherit;
+    opacity: 0.55;
+    letter-spacing: 0.1em;
+    margin-top: 1px;
+  }
 </style>
 </head>
 <body>
@@ -436,7 +474,15 @@
 
     <!-- ROW 3: Chat -->
     <div class="panel chat-panel">
-      <h3>TALK TO ATLAS <span class="meta" id="modelMeta"></span></h3>
+      <h3>
+        TALK TO ATLAS
+        <div class="model-picker" id="modelPicker">
+          <button class="model-pill" data-model="claude-opus-4-7">OPUS 4.7<span class="cost">$5/$25</span></button>
+          <button class="model-pill" data-model="claude-opus-4-6">OPUS 4.6<span class="cost">$5/$25</span></button>
+          <button class="model-pill" data-model="claude-sonnet-4-6">SONNET<span class="cost">$3/$15</span></button>
+          <button class="model-pill" data-model="claude-haiku-4-5">HAIKU<span class="cost">$1/$5</span></button>
+        </div>
+      </h3>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-empty">
           Standing by. What can I help you with<span class="blink">_</span>
@@ -451,7 +497,7 @@
     </div>
 
     <div class="footer">
-      <div>ATLAS v0.0.5 — initialized</div>
+      <div>ATLAS v0.0.6 — initialized</div>
       <div id="quote">"Atlas online. Standing by."</div>
     </div>
   </div>
@@ -606,8 +652,21 @@
   const chatInput = document.getElementById("chatInput");
   const chatSend = document.getElementById("chatSend");
   const chatClear = document.getElementById("chatClear");
-  const modelMeta = document.getElementById("modelMeta");
-  modelMeta.textContent = ATLAS_CONFIG.model || "";
+  // ===== Model picker =====
+  let selectedModel = ATLAS_CONFIG.model || "claude-opus-4-7";
+  function refreshModelPicker() {
+    document.querySelectorAll(".model-pill").forEach((p) => {
+      p.classList.toggle("active", p.dataset.model === selectedModel);
+    });
+  }
+  refreshModelPicker();
+  document.querySelectorAll(".model-pill").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      selectedModel = pill.dataset.model;
+      refreshModelPicker();
+      vscode.postMessage({ command: "updateModel", model: selectedModel });
+    });
+  });
 
   let activeTurnId = null;
   let activeBubble = null;
@@ -653,7 +712,8 @@
     vscode.postMessage({
       command: "chat",
       turnId: activeTurnId,
-      messages: chatHistory
+      messages: chatHistory,
+      model: selectedModel
     });
   }
 

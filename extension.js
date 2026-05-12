@@ -100,7 +100,7 @@ async function handleChat(context, panel, payload) {
   const userName = cfg.get("userName") || "User";
   const systemPrompt = cfg.get("systemPrompt") ||
     "You are ATLAS, a helpful AI assistant integrated into the user's VSCode dashboard.";
-  const model = cfg.get("model") || "claude-opus-4-7";
+  const model = payload.model || cfg.get("model") || "claude-opus-4-7";
   const maxTokens = cfg.get("maxTokens") || 2048;
 
   const folders = vscode.workspace.workspaceFolders;
@@ -214,6 +214,11 @@ function createPanel(context) {
         break;
       case "chat":
         handleChat(context, panel, msg);
+        break;
+      case "updateModel":
+        vscode.workspace
+          .getConfiguration("atlas")
+          .update("model", msg.model, vscode.ConfigurationTarget.Global);
         break;
     }
   });
