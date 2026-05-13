@@ -43,7 +43,6 @@ function getConfigSnapshot() {
   const folders = vscode.workspace.workspaceFolders;
   return {
     userName: cfg.get("userName") || "User",
-    location: cfg.get("location") || "",
     sprintStartDate: cfg.get("sprintStartDate") || "",
     sprintLength: cfg.get("sprintLength") || 0,
     projects: cfg.get("projects") || [],

@@ -2,7 +2,7 @@
   "name": "atlas-dashboard",
   "displayName": "ATLAS Dashboard",
   "description": "Your personal AI-style startup dashboard for VSCode with built-in Claude AI chat",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "paphangkorn",
   "repository": {
     "type": "git",
@@ -55,11 +55,6 @@
           "type": "number",
           "default": 3,
           "description": "Sprint length in days"
-        },
-        "atlas.location": {
-          "type": "string",
-          "default": "URBAN",
-          "description": "Location label shown in the status panel"
         },
         "atlas.journalPath": {
           "type": "string",

@@ -422,11 +422,9 @@
       <div class="panel">
         <h3>STATUS</h3>
         <div class="stats">
-          <div class="srow"><span>SESSION</span><span id="session">--</span></div>
           <div class="srow"><span>DATE</span><span id="date">--</span></div>
           <div class="srow"><span>TIME</span><span id="time">--:--:--</span></div>
           <div class="srow" id="sprintRow"><span>SPRINT</span><span id="sprint">--</span></div>
-          <div class="srow"><span>LOCATION</span><span id="location">--</span></div>
           <div class="srow"><span>WORKSPACE</span><span id="workspace">--</span></div>
         </div>
       </div>
@@ -497,8 +495,7 @@
     </div>
 
     <div class="footer">
-      <div>ATLAS v0.0.6 — initialized</div>
-      <div id="quote">"Atlas online. Standing by."</div>
+      <div>ATLAS v0.0.7</div>
     </div>
   </div>
 
@@ -513,7 +510,6 @@
     document.getElementById("time").textContent =
       pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
     document.getElementById("date").textContent = now.toISOString().slice(0,10);
-    document.getElementById("session").textContent = "#" + (now.getTime() % 9999);
 
     const h = now.getHours();
     let g = "Good evening";
@@ -543,19 +539,7 @@
   calcSprint();
 
   document.getElementById("userName").textContent = ATLAS_CONFIG.userName;
-  document.getElementById("location").textContent = ATLAS_CONFIG.location || "—";
   document.getElementById("workspace").textContent = ATLAS_CONFIG.workspaceName || "—";
-
-  // ===== Quotes =====
-  const quotes = [
-    '"He who holds the world, builds it."',
-    '"Ship it, then perfect it."',
-    '"Done is better than perfect."',
-    '"Move fast. Break nothing important."',
-    '"Atlas online. Standing by."',
-    '"The map is not the territory — write code, not docs."'
-  ];
-  document.getElementById("quote").textContent = quotes[Math.floor(Math.random() * quotes.length)];
 
   // ===== Projects =====
   const projWrap = document.getElementById("projectsList");
