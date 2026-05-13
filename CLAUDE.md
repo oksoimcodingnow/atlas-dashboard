@@ -75,6 +75,7 @@ On Windows, `code` may need full path: `"C:\Users\<you>\AppData\Local\Programs\M
 
 ## Conventions
 
+- **Handshake for risky work**: use `.handshake/` before non-trivial changes, especially model routing, SecretStorage, command behavior, extension packaging, or large webview edits.
 - **CommonJS only** in `extension.js`. The IDE will keep suggesting ESM — ignore that hint.
 - **Vanilla webview**: webview/index.html is one self-contained file. Don't add React or a bundler.
 - **Settings vs SecretStorage**: API keys go in SecretStorage (`context.secrets`), preferences go in `vscode.workspace.getConfiguration("atlas")`.

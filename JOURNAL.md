@@ -31,6 +31,7 @@ Companion app: **[ATLAS Mobile](https://github.com/oksoimcodingnow/atlas-mobile)
 | `USING_ATLAS.md` | End-user usage walkthrough (settings, troubleshooting, examples) |
 | `README.md` | The GitHub repo description |
 | `CLAUDE.md` | Briefing for AI coding agents working on this repo |
+| `.handshake/` | AI review workflow: Codex packet -> Claude/ChatGPT review -> Codex response -> final decision |
 
 ---
 
@@ -77,6 +78,22 @@ Companion app: **[ATLAS Mobile](https://github.com/oksoimcodingnow/atlas-mobile)
 ---
 
 ## Configuration
+
+---
+
+## AI Handshake Protocol
+
+For risky changes, use the `.handshake/` folder before committing.
+
+The workflow:
+
+1. Codex writes `.handshake/01_codex_packet.md`
+2. Paste that packet into Claude Pro or ChatGPT Plus
+3. Paste the review into `.handshake/02_external_review.md`
+4. Codex responds/fixes in `.handshake/03_codex_response.md`
+5. Final status goes in `.handshake/04_decision.md`
+
+Use this for provider/model routing, SecretStorage, webview security, VSCode commands, packaging, and large UI rewrites.
 
 All settings live under `atlas.*` in VSCode settings. Open them via:
 - The ⚙ SETTINGS button in the ATLAS header, OR
