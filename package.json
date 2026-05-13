@@ -2,7 +2,7 @@
   "name": "atlas-dashboard",
   "displayName": "ATLAS Dashboard",
   "description": "Your personal AI-style startup dashboard for VSCode with built-in Claude AI chat",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "paphangkorn",
   "repository": {
     "type": "git",
@@ -11,8 +11,13 @@
   "engines": {
     "vscode": "^1.80.0"
   },
-  "categories": ["Other", "AI"],
-  "activationEvents": ["onStartupFinished"],
+  "categories": [
+    "Other",
+    "AI"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -31,6 +36,14 @@
       {
         "command": "atlas.clearApiKey",
         "title": "ATLAS: Clear Anthropic API Key"
+      },
+      {
+        "command": "atlas.setGeminiKey",
+        "title": "ATLAS: Set Gemini API Key (free)"
+      },
+      {
+        "command": "atlas.clearGeminiKey",
+        "title": "ATLAS: Clear Gemini API Key"
       }
     ],
     "configuration": {
@@ -68,10 +81,17 @@
           "items": {
             "type": "object",
             "properties": {
-              "name": { "type": "string" },
-              "path": { "type": "string" }
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
             },
-            "required": ["name", "path"]
+            "required": [
+              "name",
+              "path"
+            ]
           }
         },
         "atlas.links": {
@@ -81,28 +101,37 @@
           "items": {
             "type": "object",
             "properties": {
-              "name": { "type": "string" },
-              "url": { "type": "string" }
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
             },
-            "required": ["name", "url"]
+            "required": [
+              "name",
+              "url"
+            ]
           }
         },
         "atlas.model": {
           "type": "string",
-          "default": "claude-opus-4-7",
+          "default": "gemini-2.5-flash",
           "enum": [
-            "claude-opus-4-7",
-            "claude-opus-4-6",
+            "gemini-2.5-flash",
+            "claude-haiku-4-5",
             "claude-sonnet-4-6",
-            "claude-haiku-4-5"
+            "claude-opus-4-6",
+            "claude-opus-4-7"
           ],
           "enumDescriptions": [
-            "Most capable (slowest, $5/$25 per 1M tokens)",
-            "Previous-generation Opus ($5/$25 per 1M tokens)",
-            "Balanced speed and intelligence ($3/$15 per 1M tokens)",
-            "Fastest and cheapest ($1/$5 per 1M tokens)"
+            "Google Gemini Flash — FREE (1500 requests/day, no card required)",
+            "Claude Haiku 4.5 — fast & cheap ($1/$5 per 1M tokens)",
+            "Claude Sonnet 4.6 — balanced ($3/$15 per 1M tokens)",
+            "Claude Opus 4.6 — previous flagship ($5/$25 per 1M tokens)",
+            "Claude Opus 4.7 — most capable ($5/$25 per 1M tokens)"
           ],
-          "description": "Claude model used by ATLAS chat"
+          "description": "AI model used by ATLAS chat"
         },
         "atlas.systemPrompt": {
           "type": "string",
@@ -122,6 +151,7 @@
     "vscode:prepublish": "echo no-build"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.74.0"
+    "@anthropic-ai/sdk": "^0.74.0",
+    "@google/genai": "^2.2.0"
   }
 }

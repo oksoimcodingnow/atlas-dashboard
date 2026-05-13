@@ -2,15 +2,19 @@ const vscode = require("vscode");
 const path = require("path");
 const fs = require("fs");
 const Anthropic = require("@anthropic-ai/sdk");
+const { GoogleGenAI } = require("@google/genai");
 
-const API_KEY_SECRET = "atlas.anthropicApiKey";
+const ANTHROPIC_KEY_SECRET = "atlas.anthropicApiKey";
+const GEMINI_KEY_SECRET = "atlas.geminiApiKey";
 
 function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand("atlas.openDashboard", () => createPanel(context)),
     vscode.commands.registerCommand("atlas.reload", () => createPanel(context)),
-    vscode.commands.registerCommand("atlas.setApiKey", () => promptForApiKey(context)),
-    vscode.commands.registerCommand("atlas.clearApiKey", () => clearApiKey(context))
+    vscode.commands.registerCommand("atlas.setApiKey", () => promptForAnthropicKey(context)),
+    vscode.commands.registerCommand("atlas.clearApiKey", () => clearAnthropicKey(context)),
+    vscode.commands.registerCommand("atlas.setGeminiKey", () => promptForGeminiKey(context)),
+    vscode.commands.registerCommand("atlas.clearGeminiKey", () => clearGeminiKey(context))
   );
 
   if (vscode.workspace.getConfiguration("atlas").get("openOnStartup")) {
@@ -18,7 +22,7 @@ function activate(context) {
   }
 }
 
-async function promptForApiKey(context) {
+async function promptForAnthropicKey(context) {
   const key = await vscode.window.showInputBox({
     prompt: "Enter your Anthropic API key (starts with sk-ant-)",
     password: true,
@@ -26,16 +30,36 @@ async function promptForApiKey(context) {
     placeHolder: "sk-ant-..."
   });
   if (key && key.trim()) {
-    await context.secrets.store(API_KEY_SECRET, key.trim());
-    vscode.window.showInformationMessage("ATLAS: API key saved securely.");
+    await context.secrets.store(ANTHROPIC_KEY_SECRET, key.trim());
+    vscode.window.showInformationMessage("ATLAS: Anthropic API key saved.");
     return true;
   }
   return false;
 }
 
-async function clearApiKey(context) {
-  await context.secrets.delete(API_KEY_SECRET);
-  vscode.window.showInformationMessage("ATLAS: API key cleared.");
+async function clearAnthropicKey(context) {
+  await context.secrets.delete(ANTHROPIC_KEY_SECRET);
+  vscode.window.showInformationMessage("ATLAS: Anthropic API key cleared.");
+}
+
+async function promptForGeminiKey(context) {
+  const key = await vscode.window.showInputBox({
+    prompt: "Enter your Google Gemini API key (free at aistudio.google.com/apikey)",
+    password: true,
+    ignoreFocusOut: true,
+    placeHolder: "AIza..."
+  });
+  if (key && key.trim()) {
+    await context.secrets.store(GEMINI_KEY_SECRET, key.trim());
+    vscode.window.showInformationMessage("ATLAS: Gemini API key saved.");
+    return true;
+  }
+  return false;
+}
+
+async function clearGeminiKey(context) {
+  await context.secrets.delete(GEMINI_KEY_SECRET);
+  vscode.window.showInformationMessage("ATLAS: Gemini API key cleared.");
 }
 
 function getConfigSnapshot() {
@@ -48,7 +72,7 @@ function getConfigSnapshot() {
     projects: cfg.get("projects") || [],
     links: cfg.get("links") || [],
     journalPath: cfg.get("journalPath") || "JOURNAL.md",
-    model: cfg.get("model") || "claude-opus-4-7",
+    model: cfg.get("model") || "gemini-2.5-flash",
     workspaceName: folders && folders[0] ? folders[0].name : "no-folder",
     workspaceRoot: folders && folders[0] ? folders[0].uri.fsPath : ""
   };
@@ -73,83 +97,121 @@ function readJournalTodos() {
   return { todos };
 }
 
-async function handleChat(context, panel, payload) {
-  const cfg = vscode.workspace.getConfiguration("atlas");
-  let apiKey = await context.secrets.get(API_KEY_SECRET);
+function buildSystemPrompt(cfg) {
+  const userName = cfg.get("userName") || "User";
+  const systemPrompt = cfg.get("systemPrompt") ||
+    "You are ATLAS, a helpful AI assistant integrated into the user's VSCode dashboard.";
+  const folders = vscode.workspace.workspaceFolders;
+  const workspaceName = folders && folders[0] ? folders[0].name : "no-folder";
+  return systemPrompt + "\n\nUser's preferred name: " + userName +
+    "\nCurrent workspace: " + workspaceName;
+}
 
+async function chatAnthropic(context, panel, payload, model) {
+  let apiKey = await context.secrets.get(ANTHROPIC_KEY_SECRET);
   if (!apiKey) {
     const action = await vscode.window.showWarningMessage(
-      "ATLAS needs your Anthropic API key to chat.",
-      "Set API Key",
-      "Cancel"
+      "ATLAS needs your Anthropic API key for Claude models.",
+      "Set API Key", "Cancel"
     );
     if (action === "Set API Key") {
-      const ok = await promptForApiKey(context);
-      if (!ok) {
-        panel.webview.postMessage({ command: "chatError", message: "API key required." });
-        return;
-      }
-      apiKey = await context.secrets.get(API_KEY_SECRET);
+      const ok = await promptForAnthropicKey(context);
+      if (!ok) { panel.webview.postMessage({ command: "chatError", message: "Anthropic API key required.", turnId: payload.turnId }); return; }
+      apiKey = await context.secrets.get(ANTHROPIC_KEY_SECRET);
     } else {
-      panel.webview.postMessage({ command: "chatError", message: "API key required." });
+      panel.webview.postMessage({ command: "chatError", message: "Anthropic API key required.", turnId: payload.turnId });
       return;
     }
   }
 
-  const userName = cfg.get("userName") || "User";
-  const systemPrompt = cfg.get("systemPrompt") ||
-    "You are ATLAS, a helpful AI assistant integrated into the user's VSCode dashboard.";
-  const model = payload.model || cfg.get("model") || "claude-opus-4-7";
+  const cfg = vscode.workspace.getConfiguration("atlas");
   const maxTokens = cfg.get("maxTokens") || 2048;
-
-  const folders = vscode.workspace.workspaceFolders;
-  const workspaceName = folders && folders[0] ? folders[0].name : "no-folder";
-
-  const fullSystem = [
-    {
-      type: "text",
-      text: systemPrompt + "\n\nUser's preferred name: " + userName +
-        "\nCurrent workspace: " + workspaceName,
-      cache_control: { type: "ephemeral" }
-    }
-  ];
+  const systemText = buildSystemPrompt(cfg);
 
   try {
     const client = new Anthropic({ apiKey });
     const stream = client.messages.stream({
       model,
       max_tokens: maxTokens,
-      system: fullSystem,
+      system: [{ type: "text", text: systemText, cache_control: { type: "ephemeral" } }],
       messages: payload.messages
     });
 
     let buffer = "";
     for await (const event of stream) {
-      if (
-        event.type === "content_block_delta" &&
-        event.delta &&
-        event.delta.type === "text_delta"
-      ) {
+      if (event.type === "content_block_delta" && event.delta && event.delta.type === "text_delta") {
         buffer += event.delta.text;
-        panel.webview.postMessage({
-          command: "chatDelta",
-          text: event.delta.text,
-          turnId: payload.turnId
-        });
+        panel.webview.postMessage({ command: "chatDelta", text: event.delta.text, turnId: payload.turnId });
       }
     }
-
-    const final = await stream.finalMessage();
-    panel.webview.postMessage({
-      command: "chatDone",
-      text: buffer,
-      turnId: payload.turnId,
-      usage: final.usage
-    });
+    await stream.finalMessage();
+    panel.webview.postMessage({ command: "chatDone", text: buffer, turnId: payload.turnId });
   } catch (err) {
     const msg = err && err.message ? err.message : String(err);
     panel.webview.postMessage({ command: "chatError", message: msg, turnId: payload.turnId });
   }
+}
+
+async function chatGemini(context, panel, payload, model) {
+  let apiKey = await context.secrets.get(GEMINI_KEY_SECRET);
+  if (!apiKey) {
+    const action = await vscode.window.showWarningMessage(
+      "ATLAS needs your Google Gemini API key for free chat. Get one at aistudio.google.com/apikey",
+      "Set Gemini Key", "Cancel"
+    );
+    if (action === "Set Gemini Key") {
+      const ok = await promptForGeminiKey(context);
+      if (!ok) { panel.webview.postMessage({ command: "chatError", message: "Gemini API key required.", turnId: payload.turnId }); return; }
+      apiKey = await context.secrets.get(GEMINI_KEY_SECRET);
+    } else {
+      panel.webview.postMessage({ command: "chatError", message: "Gemini API key required.", turnId: payload.turnId });
+      return;
+    }
+  }
+
+  const cfg = vscode.workspace.getConfiguration("atlas");
+  const systemText = buildSystemPrompt(cfg);
+
+  const contents = (payload.messages || []).map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: typeof m.content === "string" ? m.content : JSON.stringify(m.content) }]
+  }));
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const stream = await ai.models.generateContentStream({
+      model,
+      contents,
+      config: { systemInstruction: systemText }
+    });
+
+    let buffer = "";
+    for await (const chunk of stream) {
+      const parts = chunk.candidates && chunk.candidates[0] && chunk.candidates[0].content
+        ? chunk.candidates[0].content.parts || []
+        : [];
+      for (const part of parts) {
+        if (typeof part.text === "string" && part.text.length > 0) {
+          buffer += part.text;
+          panel.webview.postMessage({ command: "chatDelta", text: part.text, turnId: payload.turnId });
+        }
+      }
+    }
+    panel.webview.postMessage({ command: "chatDone", text: buffer, turnId: payload.turnId });
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    panel.webview.postMessage({ command: "chatError", message: msg, turnId: payload.turnId });
+  }
+}
+
+async function handleChat(context, panel, payload) {
+  const cfg = vscode.workspace.getConfiguration("atlas");
+  const model = payload.model || cfg.get("model") || "gemini-2.5-flash";
+  const isGemini = model.toLowerCase().startsWith("gemini");
+  if (isGemini) {
+    return chatGemini(context, panel, payload, model);
+  }
+  return chatAnthropic(context, panel, payload, model);
 }
 
 function createPanel(context) {
@@ -171,12 +233,8 @@ function createPanel(context) {
 
   panel.webview.onDidReceiveMessage((msg) => {
     switch (msg.command) {
-      case "openFile":
-        openWorkspaceFile(msg.file);
-        break;
-      case "runCommand":
-        vscode.commands.executeCommand(msg.id);
-        break;
+      case "openFile": openWorkspaceFile(msg.file); break;
+      case "runCommand": vscode.commands.executeCommand(msg.id); break;
       case "openTerminal":
         vscode.window.activeTerminal
           ? vscode.window.activeTerminal.show()
@@ -187,12 +245,8 @@ function createPanel(context) {
           vscode.commands.executeCommand("workbench.action.chat.open");
         });
         break;
-      case "openProject":
-        openProject(msg.targetPath);
-        break;
-      case "openExternal":
-        vscode.env.openExternal(vscode.Uri.parse(msg.url));
-        break;
+      case "openProject": openProject(msg.targetPath); break;
+      case "openExternal": vscode.env.openExternal(vscode.Uri.parse(msg.url)); break;
       case "runLiveServer":
         vscode.commands.executeCommand("extension.liveServer.goOnline").then(
           undefined,
@@ -203,21 +257,13 @@ function createPanel(context) {
         panel.webview.postMessage({ command: "journalResult", data: readJournalTodos() });
         break;
       case "openSettings":
-        vscode.commands.executeCommand(
-          "workbench.action.openSettings",
-          "@ext:paphangkorn.atlas-dashboard"
-        );
+        vscode.commands.executeCommand("workbench.action.openSettings", "@ext:paphangkorn.atlas-dashboard");
         break;
-      case "setApiKey":
-        promptForApiKey(context);
-        break;
-      case "chat":
-        handleChat(context, panel, msg);
-        break;
+      case "setApiKey": promptForAnthropicKey(context); break;
+      case "setGeminiKey": promptForGeminiKey(context); break;
+      case "chat": handleChat(context, panel, msg); break;
       case "updateModel":
-        vscode.workspace
-          .getConfiguration("atlas")
-          .update("model", msg.model, vscode.ConfigurationTarget.Global);
+        vscode.workspace.getConfiguration("atlas").update("model", msg.model, vscode.ConfigurationTarget.Global);
         break;
     }
   });
