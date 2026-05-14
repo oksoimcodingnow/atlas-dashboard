@@ -2,6 +2,14 @@
 
 > Briefing for AI coding agents working on this repo.
 
+## Latest Codex handoff
+
+- Branch intent: Codex dashboard Ollama work belongs on `codex/dashboard-ollama-local-test`; Claude experiments should use separate `claude/...` branches and merge by PR/review.
+- Added `OLLAMA LOCAL` chat mode so the dashboard can be tested without Anthropic/Gemini credits.
+- `atlas.model = "ollama"` now routes to local Ollama through `extension.js` and does not require SecretStorage API keys.
+- Mistake fixed: the dashboard model picker only had Gemini/Claude options, so no true local no-credit test path existed.
+- Still needs security hardening: add CSP/nonces for the webview, safer config injection, and a stricter whitelist for webview commands before packaging for broader use.
+
 ## What this is
 
 A VSCode extension that opens a Jarvis-style HUD when VSCode launches. Features:
@@ -10,7 +18,7 @@ A VSCode extension that opens a Jarvis-style HUD when VSCode launches. Features:
 - Recent projects launcher
 - Journal todos widget (reads `- [ ]` checkboxes from `JOURNAL.md`)
 - Configurable external links
-- **Built-in AI chat** with Claude + free Gemini, streaming, model picker pills
+- **Built-in AI chat** with local Ollama, Claude, and free Gemini, streaming, model picker pills
 
 **Companion repo:** https://github.com/oksoimcodingnow/atlas-mobile (mobile PWA version)
 
@@ -27,6 +35,7 @@ A VSCode extension that opens a Jarvis-style HUD when VSCode launches. Features:
 - **Plain HTML/CSS/JS** for the webview (no React, no build step)
 - **Anthropic SDK** (`@anthropic-ai/sdk`) for Claude
 - **Google GenAI SDK** (`@google/genai`) for Gemini (free)
+- **Ollama** for local no-credit chat testing
 - Distributed as `.vsix` package (built via `@vscode/vsce`)
 
 ## Architecture
@@ -49,6 +58,7 @@ webview/index.html  ← the actual HUD UI
 
 User types → webview posts `{command: "chat", messages, model, turnId}` →
 extension.js `handleChat()` routes by model name prefix:
+- `ollama` / `ollama/*` -> `chatOllama()` using local `http://127.0.0.1:11434`
 - `gemini-*` → `chatGemini()` using `@google/genai`
 - `claude-*` → `chatAnthropic()` using `@anthropic-ai/sdk`
 
@@ -58,6 +68,7 @@ Both stream text chunks back as `{command: "chatDelta", text, turnId}` events.
 
 | Secret key | Set via command | Where to get |
 |-----------|----------------|--------------|
+| none | `ollama` local mode | install Ollama locally and run `ollama pull llama3.2:3b` |
 | `atlas.geminiApiKey` | `ATLAS: Set Gemini API Key (free)` | https://aistudio.google.com/apikey |
 | `atlas.anthropicApiKey` | `ATLAS: Set Anthropic API Key` | https://console.anthropic.com |
 

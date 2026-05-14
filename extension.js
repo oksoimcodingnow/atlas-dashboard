@@ -1,6 +1,8 @@
 const vscode = require("vscode");
 const path = require("path");
 const fs = require("fs");
+const http = require("http");
+const https = require("https");
 const Anthropic = require("@anthropic-ai/sdk");
 const { GoogleGenAI } = require("@google/genai");
 
@@ -107,6 +109,100 @@ function buildSystemPrompt(cfg) {
     "\nCurrent workspace: " + workspaceName;
 }
 
+function postJsonLineStream(urlString, body, onJsonLine) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlString);
+    const transport = url.protocol === "https:" ? https : http;
+    const payload = JSON.stringify(body);
+    const req = transport.request(
+      {
+        method: "POST",
+        hostname: url.hostname,
+        port: url.port,
+        path: url.pathname + url.search,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(payload)
+        }
+      },
+      (res) => {
+        let buffer = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => {
+          buffer += chunk;
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              onJsonLine(JSON.parse(line));
+            } catch (err) {
+              reject(err);
+              req.destroy();
+              return;
+            }
+          }
+        });
+        res.on("end", () => {
+          try {
+            if (buffer.trim()) onJsonLine(JSON.parse(buffer));
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+    );
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function chatOllama(context, panel, payload, model) {
+  const cfg = vscode.workspace.getConfiguration("atlas");
+  const systemText = buildSystemPrompt(cfg) +
+    "\n\nYou are running in local Ollama mode. No paid AI API keys are being used.";
+  const baseUrl = (cfg.get("ollamaBaseUrl") || "http://127.0.0.1:11434").replace(/\/+$/, "");
+  const ollamaModel = model.toLowerCase().startsWith("ollama/")
+    ? model.slice("ollama/".length)
+    : (cfg.get("ollamaModel") || "llama3.2:3b");
+
+  const messages = [
+    { role: "system", content: systemText },
+    ...(payload.messages || []).map((m) => ({
+      role: m.role,
+      content: typeof m.content === "string" ? m.content : JSON.stringify(m.content)
+    }))
+  ];
+
+  try {
+    let buffer = "";
+    await postJsonLineStream(
+      baseUrl + "/api/chat",
+      { model: ollamaModel, stream: true, messages },
+      (chunk) => {
+        if (chunk.error) throw new Error(chunk.error);
+        const text = chunk.message && typeof chunk.message.content === "string"
+          ? chunk.message.content
+          : "";
+        if (text) {
+          buffer += text;
+          panel.webview.postMessage({ command: "chatDelta", text, turnId: payload.turnId });
+        }
+      }
+    );
+    panel.webview.postMessage({ command: "chatDone", text: buffer, turnId: payload.turnId });
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    panel.webview.postMessage({
+      command: "chatError",
+      message: msg + " (Start Ollama and run: ollama pull " + ollamaModel + ")",
+      turnId: payload.turnId
+    });
+  }
+}
+
 async function chatAnthropic(context, panel, payload, model) {
   let apiKey = await context.secrets.get(ANTHROPIC_KEY_SECRET);
   if (!apiKey) {
@@ -207,6 +303,10 @@ async function chatGemini(context, panel, payload, model) {
 async function handleChat(context, panel, payload) {
   const cfg = vscode.workspace.getConfiguration("atlas");
   const model = payload.model || cfg.get("model") || "gemini-2.5-flash";
+  const isOllama = model.toLowerCase() === "ollama" || model.toLowerCase().startsWith("ollama/");
+  if (isOllama) {
+    return chatOllama(context, panel, payload, model);
+  }
   const isGemini = model.toLowerCase().startsWith("gemini");
   if (isGemini) {
     return chatGemini(context, panel, payload, model);

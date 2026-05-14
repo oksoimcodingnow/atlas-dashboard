@@ -118,6 +118,7 @@
           "type": "string",
           "default": "gemini-2.5-flash",
           "enum": [
+            "ollama",
             "gemini-2.5-flash",
             "claude-haiku-4-5",
             "claude-sonnet-4-6",
@@ -125,6 +126,7 @@
             "claude-opus-4-7"
           ],
           "enumDescriptions": [
+            "Ollama local model - no API key or credits",
             "Google Gemini Flash — FREE (1500 requests/day, no card required)",
             "Claude Haiku 4.5 — fast & cheap ($1/$5 per 1M tokens)",
             "Claude Sonnet 4.6 — balanced ($3/$15 per 1M tokens)",
@@ -132,6 +134,16 @@
             "Claude Opus 4.7 — most capable ($5/$25 per 1M tokens)"
           ],
           "description": "AI model used by ATLAS chat"
+        },
+        "atlas.ollamaBaseUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434",
+          "description": "Local Ollama server URL used by the OLLAMA model option"
+        },
+        "atlas.ollamaModel": {
+          "type": "string",
+          "default": "llama3.2:3b",
+          "description": "Local Ollama model used when atlas.model is set to ollama"
         },
         "atlas.systemPrompt": {
           "type": "string",
